@@ -1,14 +1,31 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Server struct {
 	Dashboard string `yaml:"dashboard"`
+}
+
+func sendStatus(myurl string, host string, status string) {
+
+	values := map[string]string{"host": host, "status": status}
+	jsonValue, _ := json.Marshal(values)
+	resp, err := http.Post(myurl, "application/json", bytes.NewBuffer(jsonValue))
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(resp)
 }
 
 func main() {
@@ -29,6 +46,13 @@ func main() {
 		return
 	}
 
-	// Print the data
-	fmt.Println(server.Dashboard)
+	// Get the hostname running the agent.
+	hostname, err := os.Hostname()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	url := server.Dashboard
+
+	sendStatus(url, hostname, "pass")
 }
